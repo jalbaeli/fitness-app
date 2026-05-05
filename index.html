@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fitness">
+<meta name="theme-color" content="#0f0f23">
+<title>Fitness Master</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+/* ── RESET & TOKENS ─────────────────────────────────────── */
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0f23;--surf:#1a1a35;--surf2:#252548;--surf3:#2e2e58;
+  --acc:#7c6bff;--acc2:#5a52cc;
+  --ok:#00d68f;--warn:#ffb830;--danger:#ff4d6d;
+  --txt:#e2e2f0;--txt2:#9090b0;--brd:#2a2a50;
+  --nav:65px;--hdr:56px;
+  --sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+textarea,input{font-family:inherit}
+
+/* ── LAYOUT ─────────────────────────────────────────────── */
+#app{display:flex;flex-direction:column;height:100dvh}
+
+/* header */
+#hdr{
+  height:calc(var(--hdr) + var(--st));padding-top:var(--st);
+  background:var(--surf);border-bottom:1px solid var(--brd);
+  display:flex;align-items:center;justify-content:space-between;
+  padding-left:16px;padding-right:16px;flex-shrink:0;
+}
+#hdr-title{font-size:1.1rem;font-weight:700}
+#hdr-sync{background:none;border:none;color:var(--txt2);font-size:1.3rem;padding:8px;line-height:1}
+
+/* content */
+#content{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px 8px}
+.page{display:none}.page.on{display:block}
+
+/* bottom nav */
+#nav{
+  height:calc(var(--nav) + var(--sb));padding-bottom:var(--sb);
+  background:var(--surf);border-top:1px solid var(--brd);
+  display:flex;align-items:center;flex-shrink:0;
+}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:3px;border:none;background:none;
+  color:var(--txt2);padding:8px 4px;height:100%;transition:color .15s}
+.nb.on{color:var(--acc)}
+.nb-icon{font-size:1.35rem;line-height:1}
+.nb-lbl{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+
+/* ── CARDS ───────────────────────────────────────────────── */
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:18px;
+  padding:16px;margin-bottom:12px}
+.card-title{font-size:.72rem;color:var(--txt2);text-transform:uppercase;
+  letter-spacing:.06em;margin-bottom:10px;font-weight:700}
+.sec-title{font-size:.95rem;font-weight:700;margin-bottom:10px}
+
+/* stat grid */
+.stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.stat{background:var(--surf);border:1px solid var(--brd);border-radius:18px;
+  padding:14px;text-align:center}
+.stat-val{font-size:1.9rem;font-weight:900;color:var(--acc);line-height:1}
+.stat-unit{font-size:.72rem;color:var(--txt2);margin-top:2px}
+.stat-lbl{font-size:.78rem;color:var(--txt2);margin-top:4px}
+
+/* history item */
+.h-item{background:var(--surf);border:1px solid var(--brd);border-radius:14px;
+  padding:13px 14px;margin-bottom:8px}
+.h-date{font-size:.75rem;color:var(--txt2);margin-bottom:3px}
+.h-title{font-weight:700;font-size:.9rem;margin-bottom:2px}
+.h-detail{font-size:.78rem;color:var(--txt2);line-height:1.4}
+
+/* empty */
+.empty{text-align:center;color:var(--txt2);padding:32px 16px}
+.empty-ico{font-size:2.2rem;margin-bottom:8px}
+.empty p{font-size:.88rem}
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+.btn{display:block;width:100%;padding:15px;border:none;border-radius:14px;
+  font-size:.95rem;font-weight:700;text-align:center;transition:opacity .15s}
+.btn:active{opacity:.65}
+.btn-acc{background:var(--acc);color:#fff}
+.btn-ok{background:var(--ok);color:#000}
+.btn-ghost{background:var(--surf2);color:var(--txt);border:1px solid var(--brd)}
+
+/* ── TYPE SELECTOR ───────────────────────────────────────── */
+.type-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.type-btn{padding:14px 6px;border:2px solid var(--brd);border-radius:14px;
+  background:var(--surf);color:var(--txt2);font-size:.82rem;font-weight:700;text-align:center;
+  transition:all .15s;line-height:1.4}
+.type-btn .ico{font-size:1.6rem;display:block;margin-bottom:4px}
+.type-btn.on{border-color:var(--acc);background:rgba(124,107,255,.15);color:var(--acc)}
+
+/* ── EXERCISE LIST ───────────────────────────────────────── */
+.ex-item{background:var(--surf);border:1px solid var(--brd);border-radius:14px;
+  margin-bottom:8px;overflow:hidden}
+.ex-hdr{display:flex;align-items:center;gap:12px;padding:14px 15px;cursor:pointer}
+.ex-box{width:26px;height:26px;border-radius:8px;border:2px solid var(--brd);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.ex-item.on .ex-box{background:var(--acc);border-color:var(--acc)}
+.ex-tick{color:#fff;font-size:.8rem;display:none}
+.ex-item.on .ex-tick{display:block}
+.ex-name{font-size:.92rem;font-weight:700;flex:1;line-height:1.3}
+.ex-muscle{font-size:.72rem;color:var(--txt2);margin-top:1px}
+
+/* stepper panel */
+.ex-panel{display:none;padding:10px 15px 14px;border-top:1px solid var(--brd);
+  background:var(--surf2)}
+.ex-item.on .ex-panel{display:block}
+.sp-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.sp-lbl{font-size:.78rem;color:var(--txt2);width:70px;font-weight:600}
+.stepper{display:flex;align-items:center}
+.sp-btn{width:42px;height:42px;border:1px solid var(--brd);background:var(--surf);
+  color:var(--txt);font-size:1.3rem;border-radius:10px;display:flex;align-items:center;
+  justify-content:center;transition:opacity .15s}
+.sp-btn:active{opacity:.6}
+.sp-val{min-width:64px;text-align:center;font-size:1.05rem;font-weight:800;padding:0 6px}
+.ex-notes{width:100%;background:var(--surf);border:1px solid var(--brd);border-radius:10px;
+  color:var(--txt);padding:10px 12px;font-size:.88rem;resize:none;margin-top:4px}
+
+/* ── METRICS FORM ────────────────────────────────────────── */
+.f-row{margin-bottom:14px}
+.f-lbl{font-size:.78rem;color:var(--txt2);margin-bottom:6px;display:block;font-weight:600}
+.big-stepper{display:flex;align-items:center;gap:2px}
+.big-btn{width:52px;height:52px;border:1px solid var(--brd);background:var(--surf2);
+  color:var(--txt);font-size:1.5rem;border-radius:12px;display:flex;align-items:center;
+  justify-content:center;transition:opacity .15s}
+.big-btn:active{opacity:.6}
+.big-val{min-width:90px;text-align:center;font-size:1.5rem;font-weight:900;padding:0 8px}
+.big-unit{color:var(--txt2);font-size:.9rem;margin-left:6px}
+.f-input{width:100%;background:var(--surf2);border:1px solid var(--brd);border-radius:12px;
+  color:var(--txt);padding:13px 15px;font-size:.95rem}
+.f-input:focus{outline:none;border-color:var(--acc)}
+
+/* ── SUPPLEMENT TABLE ─────────────────────────────────────── */
+.supp-table{width:100%;border-collapse:collapse;font-size:.83rem}
+.supp-table th{color:var(--txt2);font-weight:700;text-align:left;padding:7px 5px;
+  border-bottom:1px solid var(--brd)}
+.supp-table td{padding:9px 5px;border-bottom:1px solid rgba(255,255,255,.04);vertical-align:middle}
+.tag{display:inline-block;padding:3px 8px;border-radius:20px;font-size:.68rem;font-weight:700;white-space:nowrap}
+.t-am{background:rgba(255,184,48,.18);color:#ffb830}
+.t-pre{background:rgba(255,77,109,.18);color:#ff7b95}
+.t-post{background:rgba(124,107,255,.18);color:#a99eff}
+.t-pm{background:rgba(0,214,143,.18);color:#00d68f}
+
+/* detail cards cues */
+.cues{list-style:none}
+.cues li{padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);
+  font-size:.84rem;line-height:1.45}
+.cues li:last-child{border:none}
+.cues li::before{content:"→ ";color:var(--acc)}
+
+/* ── GUIDE ───────────────────────────────────────────────── */
+.filter-row{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto;
+  padding-bottom:4px;-webkit-overflow-scrolling:touch}
+.filter-row::-webkit-scrollbar{display:none}
+.fb{padding:8px 16px;border:1px solid var(--brd);border-radius:20px;
+  background:var(--surf);color:var(--txt2);font-size:.82rem;white-space:nowrap;
+  cursor:pointer;transition:all .15s;flex-shrink:0}
+.fb.on{border-color:var(--acc);color:var(--acc);background:rgba(124,107,255,.1)}
+.guide-card{background:var(--surf);border:1px solid var(--brd);border-radius:14px;
+  margin-bottom:10px;overflow:hidden}
+.guide-hdr{padding:14px 15px;cursor:pointer;display:flex;justify-content:space-between;
+  align-items:center}
+.guide-name{font-size:.92rem;font-weight:700}
+.guide-sub{font-size:.72rem;color:var(--txt2);margin-top:2px}
+.guide-tag{font-size:.68rem;color:var(--txt2);padding:2px 8px;background:var(--surf2);
+  border-radius:8px;margin-right:6px}
+.guide-arr{color:var(--txt2);transition:transform .2s;font-size:.9rem}
+.guide-card.open .guide-arr{transform:rotate(180deg)}
+.guide-body{display:none;padding:0 15px 15px}
+.guide-card.open .guide-body{display:block}
+.pos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.pos-box{background:var(--surf2);border-radius:10px;padding:10px}
+.pos-lbl{font-size:.62rem;color:var(--txt2);text-transform:uppercase;margin-bottom:4px;font-weight:700}
+.pos-txt{font-size:.8rem;line-height:1.4}
+
+/* ── MODAL ───────────────────────────────────────────────── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;
+  align-items:flex-end}
+.modal-bg.on{display:flex}
+.modal{background:var(--surf);border-radius:24px 24px 0 0;
+  padding:24px 20px;padding-bottom:calc(24px + var(--sb));width:100%;max-height:90dvh;overflow-y:auto}
+.modal-title{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:.82rem;color:var(--txt2);margin-bottom:14px;line-height:1.4}
+.sync-code{font-family:monospace;font-size:1.6rem;letter-spacing:.18em;color:var(--acc);
+  font-weight:900;text-align:center;padding:14px;background:var(--surf2);
+  border-radius:14px;margin-bottom:10px}
+.modal-input{width:100%;background:var(--surf2);border:1px solid var(--brd);
+  border-radius:12px;color:var(--txt);padding:14px 16px;font-size:1.2rem;
+  text-align:center;letter-spacing:.2em;text-transform:uppercase;font-family:monospace;
+  margin-bottom:6px}
+.modal-hint{font-size:.76rem;color:var(--txt2);text-align:center;margin-bottom:14px;line-height:1.4}
+.modal-divider{border:none;border-top:1px solid var(--brd);margin:16px 0}
+
+/* ── TOAST ───────────────────────────────────────────────── */
+#toast{position:fixed;bottom:calc(var(--nav) + 14px + var(--sb));left:50%;
+  transform:translateX(-50%) translateY(16px);background:var(--surf3);
+  border:1px solid var(--brd);color:var(--txt);padding:11px 18px;border-radius:12px;
+  font-size:.88rem;font-weight:700;opacity:0;transition:all .25s;
+  pointer-events:none;white-space:nowrap;z-index:999}
+#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── MISC ────────────────────────────────────────────────── */
+.mb8{margin-bottom:8px}.mt12{margin-top:12px}.gap12{height:12px}
+.pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:.68rem;font-weight:700}
+.pill-s{background:rgba(255,184,48,.2);color:#ffb830}
+.pill-a{background:rgba(124,107,255,.2);color:#9b8eff}
+.danger-card{border-color:rgba(255,77,109,.4)!important}
+.danger-title{color:var(--danger)!important}
+.sync-note{font-size:.75rem;color:var(--txt2);padding:8px 12px;background:var(--surf2);
+  border-radius:10px;margin-bottom:12px;text-align:center;line-height:1.4}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- HEADER -->
+<header id="hdr">
+  <h1 id="hdr-title">Dashboard</h1>
+  <button id="hdr-sync" onclick="openModal()" title="Sincronización">⚙️</button>
+</header>
+
+<!-- CONTENT -->
+<main id="content">
+
+<!-- ═══ DASHBOARD ═══════════════════════════════════════════ -->
+<div class="page on" id="p-dashboard">
+  <div class="stat-grid">
+    <div class="stat"><div class="stat-val" id="d-peso">90</div><div class="stat-unit">kg</div><div class="stat-lbl">Peso</div></div>
+    <div class="stat"><div class="stat-val" id="d-grasa">21</div><div class="stat-unit">%</div><div class="stat-lbl">Grasa</div></div>
+    <div class="stat"><div class="stat-val" id="d-magra">71.1</div><div class="stat-unit">kg</div><div class="stat-lbl">Masa magra</div></div>
+    <div class="stat"><div class="stat-val" id="d-semana">S1</div><div class="stat-unit">Bloque 1</div><div class="stat-lbl">Semana</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Últimos entrenos</div>
+    <div id="d-entrenos"><div class="empty"><div class="empty-ico">💪</div><p>Sin entrenos aún — ¡a darle!</p></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Últimas métricas</div>
+    <div id="d-metricas"><div class="empty"><div class="empty-ico">📊</div><p>Sin métricas registradas</p></div></div>
+  </div>
+</div>
+
+<!-- ═══ REGISTRAR ═══════════════════════════════════════════ -->
+<div class="page" id="p-registrar">
+  <div class="sec-title">¿Qué entrenaste hoy?</div>
+  <div class="type-grid">
+    <button class="type-btn" onclick="pickType('Push')"><span class="ico">🤜</span>Push</button>
+    <button class="type-btn" onclick="pickType('Pull')"><span class="ico">🤛</span>Pull</button>
+    <button class="type-btn" onclick="pickType('Legs')"><span class="ico">🦵</span>Legs</button>
+  </div>
+  <div id="ex-zone" style="display:none">
+    <div class="sec-title" id="ex-zone-title">Ejercicios</div>
+    <div id="ex-list"></div>
+    <div class="gap12"></div>
+    <button class="btn btn-ok" onclick="saveWorkout()">💾 Guardar entreno</button>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ═══ MÉTRICAS ═════════════════════════════════════════════ -->
+<div class="page" id="p-metricas">
+  <div class="card">
+    <div class="sec-title">Registrar medición</div>
+    <div class="f-row">
+      <label class="f-lbl">Peso corporal</label>
+      <div class="big-stepper">
+        <button class="big-btn" onclick="stepM('peso',-0.5)">−</button>
+        <span class="big-val" id="m-peso">90.0</span>
+        <button class="big-btn" onclick="stepM('peso',0.5)">+</button>
+        <span class="big-unit">kg</span>
+      </div>
+    </div>
+    <div class="f-row">
+      <label class="f-lbl">Grasa corporal</label>
+      <div class="big-stepper">
+        <button class="big-btn" onclick="stepM('grasa',-0.5)">−</button>
+        <span class="big-val" id="m-grasa">21.0</span>
+        <button class="big-btn" onclick="stepM('grasa',0.5)">+</button>
+        <span class="big-unit">%</span>
+      </div>
+    </div>
+    <div class="f-row">
+      <label class="f-lbl">Notas (opcional)</label>
+      <textarea class="f-input" id="m-notas" rows="2" placeholder="Ej: ayunas, mañana…"></textarea>
+    </div>
+    <div class="gap12"></div>
+    <button class="btn btn-acc" onclick="saveMetric()">💾 Guardar</button>
+  </div>
+  <div class="sec-title mt12">Historial</div>
+  <div id="m-hist"><div class="empty"><div class="empty-ico">📊</div><p>Sin métricas aún</p></div></div>
+</div>
+
+<!-- ═══ SUPLEMENTOS ══════════════════════════════════════════ -->
+<div class="page" id="p-suplementos">
+  <div class="card">
+    <div class="card-title">Resumen diario</div>
+    <table class="supp-table">
+      <thead><tr><th>Suplemento</th><th>Horario</th><th>Dosis</th></tr></thead>
+      <tbody>
+        <tr><td>Probióticos</td><td><span class="tag t-am">🌅 Mañana</span></td><td>1 cápsula</td></tr>
+        <tr><td>Omega 3</td><td><span class="tag t-am">🌅 Mañana</span></td><td>2–3 g EPA+DHA</td></tr>
+        <tr><td>Vitamina D3 + K2</td><td><span class="tag t-am">🌅 Mañana</span></td><td>4,000 UI + 100 mcg</td></tr>
+        <tr><td>CoQ10 ubiquinol</td><td><span class="tag t-am">🌅 Mañana</span></td><td>100–200 mg</td></tr>
+        <tr><td>Colágeno</td><td><span class="tag t-am">🌅 Mañana</span></td><td>10–15 g</td></tr>
+        <tr><td>Cafeína <small style="opacity:.6">(opc.)</small></td><td><span class="tag t-pre">⚡ Pre</span></td><td>200–300 mg</td></tr>
+        <tr><td>Citrulina <small style="opacity:.6">(opc.)</small></td><td><span class="tag t-pre">⚡ Pre</span></td><td>6 g</td></tr>
+        <tr><td>Whey aislada</td><td><span class="tag t-post">🏋️ Post</span></td><td>30–40 g</td></tr>
+        <tr><td>Creatina</td><td><span class="tag t-post">🏋️ Post</span></td><td>5 g</td></tr>
+        <tr><td>Magnesio glicinato</td><td><span class="tag t-pm">🌙 Noche</span></td><td>300 mg</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌅 Mañana — con desayuno</div>
+    <ul class="cues">
+      <li><strong>Probióticos</strong> — 1 cápsula (con o sin comida según marca)</li>
+      <li><strong>Omega 3</strong> — verifica que el producto llegue a 2–3 g de EPA+DHA. Muchas marcas solo tienen 200–400 mg por cápsula</li>
+      <li><strong>Vitamina D3 4,000 UI + K2 MK-7 100 mcg</strong> — con grasa para absorción. K2 dirige el calcio al hueso, no a las arterias</li>
+      <li><strong>CoQ10 ubiquinol 100–200 mg</strong> — crítico con Lipitor (estatina depleta CoQ10). Ubiquinol &gt; ubiquinona para +40 años</li>
+      <li><strong>Colágeno 10–15 g</strong> — no cuenta como proteína muscular. Ideal con vitamina C</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">⚡ Pre-entreno (30–45 min antes)</div>
+    <ul class="cues">
+      <li><strong>Cafeína 200–300 mg</strong> — modera mientras estés en retiro de ISRS. No después de las 14:00 si entrenas en la mañana</li>
+      <li><strong>Citrulina malato 6 g</strong> — mejor bombeo y posible reducción de DOMS. Opcional</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🏋️ Post-entreno</div>
+    <ul class="cues">
+      <li><strong>Whey aislada 30–40 g</strong> — ventana anabólica. Aislada = menos lactosa, mejor para recomp</li>
+      <li><strong>Creatina 5 g</strong> — mezcla con el batido. A los 50+ los beneficios son MAYORES. No necesita carga ni ciclado</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🌙 Noche (1h antes de dormir)</div>
+    <ul class="cues">
+      <li><strong>Magnesio glicinato 300 mg</strong> — SEPARAR del Biktarvy mínimo 2h. Si tomaste Biktarvy en la mañana no hay problema</li>
+      <li><strong>Caseína o yogurt griego 30 g</strong> — si la cena fue temprana, evita catabolismo nocturno</li>
+    </ul>
+  </div>
+
+  <div class="card danger-card">
+    <div class="card-title danger-title">🚫 Prohibidos con tu perfil</div>
+    <ul class="cues">
+      <li><strong>Toronja</strong> en cualquier forma — interacción con Lipitor (CYP3A4)</li>
+      <li><strong>5-HTP, L-Triptófano, Hierba de San Juan, SAM-e</strong> — síndrome serotoninérgico con escitalopram</li>
+      <li><strong>Pre-workouts con estimulantes altas dosis</strong> — riesgo QT con Sulpirida + Escitalopram</li>
+      <li><strong>Magnesio, calcio, zinc</strong> — separar del Biktarvy 2–6 h (quela cobicistat)</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ═══ GUÍA ════════════════════════════════════════════════ -->
+<div class="page" id="p-guia">
+  <div class="filter-row">
+    <button class="fb on" onclick="filterG('Todos',this)">Todos</button>
+    <button class="fb" onclick="filterG('Push',this)">🤜 Push</button>
+    <button class="fb" onclick="filterG('Pull',this)">🤛 Pull</button>
+    <button class="fb" onclick="filterG('Legs',this)">🦵 Legs</button>
+  </div>
+  <div id="guia-list"></div>
+</div>
+
+</main>
+
+<!-- BOTTOM NAV -->
+<nav id="nav">
+  <button class="nb on" data-p="dashboard" onclick="goTab('dashboard',this)"><span class="nb-icon">🏠</span><span class="nb-lbl">Inicio</span></button>
+  <button class="nb" data-p="registrar" onclick="goTab('registrar',this)"><span class="nb-icon">➕</span><span class="nb-lbl">Registrar</span></button>
+  <button class="nb" data-p="metricas" onclick="goTab('metricas',this)"><span class="nb-icon">📊</span><span class="nb-lbl">Métricas</span></button>
+  <button class="nb" data-p="suplementos" onclick="goTab('suplementos',this)"><span class="nb-icon">💊</span><span class="nb-lbl">Suplementos</span></button>
+  <button class="nb" data-p="guia" onclick="goTab('guia',this)"><span class="nb-icon">🏋️</span><span class="nb-lbl">Guía</span></button>
+</nav>
+</div>
+
+<!-- SYNC / SETTINGS MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-title">Sincronización entre dispositivos</div>
+    <div class="modal-sub">Tu código único. Ingrésalo en el otro dispositivo para compartir todos los datos.</div>
+    <div class="sync-code" id="modal-code">------</div>
+    <button class="btn btn-ghost mb8" onclick="copyCode()">📋 Copiar código</button>
+    <hr class="modal-divider">
+    <div class="modal-sub">¿Tienes el código del otro dispositivo? Ingrésalo aquí:</div>
+    <input type="text" class="modal-input" id="modal-input" maxlength="6" placeholder="ABC123">
+    <div class="modal-hint">⚠️ Esto reemplazará los datos locales con los del otro dispositivo</div>
+    <button class="btn btn-acc mb8" onclick="linkCode()">🔗 Vincular dispositivos</button>
+    <button class="btn btn-ghost" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// FIREBASE CONFIG — Reemplaza con tu configuración
+// ══════════════════════════════════════════════════════════════
+const FB_CONFIG = {
+  apiKey:            "AIzaSyAO2TwMvDHdB9-PFfLoO53YcNoDFg9YKdg",
+  authDomain:        "fitness-jorge-c047a.firebaseapp.com",
+  databaseURL:       "https://fitness-jorge-c047a-default-rtdb.firebaseio.com",
+  projectId:         "fitness-jorge-c047a",
+  storageBucket:     "fitness-jorge-c047a.firebasestorage.app",
+  messagingSenderId: "498670961276",
+  appId:             "1:498670961276:web:13615be0fbb3ff6fab7ff9"
+};
+
+// ══════════════════════════════════════════════════════════════
+// EXERCISE DATA
+// ══════════════════════════════════════════════════════════════
+const GUIA = [
+  // PUSH ────────────────────────────────────────────────────
+  {n:"Press inclinado mancuernas",g:"Push",m:"Pecho superior",
+   i:"Banco 30–45°, mancuernas al lado del pecho, codos a 75°",
+   f:"Brazos extendidos, mancuernas casi tocándose, codos sin bloquear",
+   c:["Baja lento 3 seg, sube explosivo","Mantén escápulas retraídas todo el recorrido","Exhala al subir, inhala al bajar"]},
+  {n:"Press en máquina",g:"Push",m:"Pecho medio",
+   i:"Espalda pegada al respaldo, codos a 90°",
+   f:"Brazos extendidos, tensión en pecho, sin bloquear codos",
+   c:["Ajusta el asiento para que los mangos estén al nivel del pecho medio","No dejes que los pesos toquen la pila entre reps","Mantén presión constante"]},
+  {n:"Press Arnold",g:"Push",m:"Deltoides anterior + medio",
+   i:"Mancuernas frente a cara, palmas hacia ti, codos al frente",
+   f:"Brazos extendidos sobre cabeza, palmas al frente, rotación completa",
+   c:["La rotación es la clave — no la omitas","Muñecas neutras al final","Control en la bajada — 3 seg"]},
+  {n:"Press militar",g:"Push",m:"Deltoides anterior",
+   i:"Barra a nivel de clavícula, agarre ligeramente más ancho que hombros",
+   f:"Brazos extendidos, barra sobre cabeza, core tenso",
+   c:["No arquees la espalda baja — aprieta glúteos","Empuja la cabeza ligeramente hacia adelante al pasar la barra","Muñecas neutras, no dobladas"]},
+  {n:"Elevaciones laterales",g:"Push",m:"Deltoides medio",
+   i:"De pie, mancuernas al lado, ligera flexión de codo (10–15°)",
+   f:"Brazos a 90° con el torso, meñique ligeramente más alto",
+   c:["Imagina que viertes agua de una jarra (meñique arriba)","Sube lento y baja MÁS lento — 4 seg bajando","Pesos ligeros, bien ejecutado supera pesos altos con trampa"]},
+  {n:"Fondos en máquina",g:"Push",m:"Tríceps",
+   i:"Sentado, codos pegados al cuerpo, agarre neutral",
+   f:"Brazos extendidos, codos sin bloquear",
+   c:["Codos pegados al torso todo el tiempo","Inclínate levemente hacia adelante para más activación de tríceps","Pausa 1 seg con brazos extendidos"]},
+  {n:"Extensiones tríceps polea",g:"Push",m:"Tríceps (cabeza lateral)",
+   i:"De pie frente a polea alta, codos pegados al cuerpo, antebrazo paralelo al suelo",
+   f:"Brazos completamente extendidos hacia abajo",
+   c:["Codos fijos como bisagra — solo mueves el antebrazo","Pausa y aprieta tríceps al final","Usa cuerda o barra recta según preferencia"]},
+  {n:"Aperturas pec deck",g:"Push",m:"Pecho (aislamiento)",
+   i:"Espalda pegada, codos en los soportes o agarre con leve flexión",
+   f:"Brazos frente al pecho casi tocándose, máximo estiramiento en apertura",
+   c:["Lleva los codos a tocar al frente, no las manos","El pecho hace el trabajo — no los hombros","Controla la apertura — no dejes que te jale"]},
+  {n:"Elevaciones laterales cable",g:"Push",m:"Deltoides medio",
+   i:"Al lado de la polea baja, agarra con la mano opuesta",
+   f:"Brazo a 90°, meñique ligeramente arriba",
+   c:["El cable crea tensión constante, superior a la mancuerna","Control total arriba y abajo","No gires el torso — solo el hombro trabaja"]},
+  {n:"Tríceps sobre cabeza",g:"Push",m:"Tríceps (cabeza larga)",
+   i:"De pie o sentado, mancuerna o barra sobre cabeza, codos al frente",
+   f:"Brazos extendidos sobre cabeza, codos sin abrir",
+   c:["Codos apuntando al techo — no los abras","La cabeza larga solo se activa con el brazo levantado","Baja lentamente hasta sentir máximo estiramiento"]},
+  // PULL ────────────────────────────────────────────────────
+  {n:"Jalón al pecho",g:"Pull",m:"Dorsal + bíceps",
+   i:"Sentado, agarre prono ancho (1.5× hombros), brazos extendidos",
+   f:"Barra toca pecho superior, codos apuntando al suelo, escápulas juntas",
+   c:["Jala con los codos hacia abajo y atrás — no con bíceps","Inclínate 15° hacia atrás para posición óptima","Esternón arriba, pecho abierto todo el tiempo"]},
+  {n:"Remo en máquina",g:"Pull",m:"Dorsal + romboides",
+   i:"Pecho contra el soporte, espalda ligeramente arqueada, brazos extendidos",
+   f:"Codos atrás, escápulas completamente retraídas",
+   c:["Aprieta la escápula 1 seg al final","No encogues hombros — error muy común","Mantén el cuello neutro"]},
+  {n:"Remo unilateral mancuerna",g:"Pull",m:"Dorsal + bíceps",
+   i:"Rodilla y mano en banco, espalda paralela al suelo, mancuerna colgando",
+   f:"Codo atrás y arriba, mancuerna al costado del torso",
+   c:["Piensa en meter el codo en el bolsillo trasero","Rota levemente el torso para mayor rango","Controla la bajada — no dejes caer"]},
+  {n:"Face pulls",g:"Pull",m:"Deltoides posterior + manguito",
+   i:"Polea alta con cuerda, codos a 90°, agarre con pulgares arriba",
+   f:"Cuerda al nivel de orejas, codos abiertos en T",
+   c:["Codos arriba siempre — al nivel de hombros o más","Separa la cuerda llevando manos hacia orejas","Fundamental para salud del manguito — no lo quites"]},
+  {n:"Curl bíceps barra",g:"Pull",m:"Bíceps",
+   i:"De pie, barra con agarre supino al ancho de caderas, codos pegados",
+   f:"Barra al nivel del pecho, bíceps completamente contraídos",
+   c:["Codos fijos — no los proyectes hacia adelante","Supina la muñeca al subir para activar el bíceps completo","Baja 3 segundos — la excéntrica construye músculo"]},
+  {n:"Curl martillo",g:"Pull",m:"Braquial + braquiorradial",
+   i:"Mancuernas al lado, agarre neutro (palmas enfrentadas), codos pegados",
+   f:"Mancuernas al nivel del hombro, sin girar la muñeca",
+   c:["Agarre neutro activa el braquial — diferente al curl clásico","No balancees el torso","Alterna o simultáneo según preferencia"]},
+  {n:"Curl predicador",g:"Pull",m:"Bíceps (cabeza corta)",
+   i:"Codo apoyado en soporte inclinado, brazo completamente extendido",
+   f:"Antebrazo perpendicular al suelo, bíceps contraído",
+   c:["El soporte elimina el trampa — solo bíceps trabaja","No hiperextiendas el codo en la bajada","Pausa 1 seg arriba con apretón máximo"]},
+  {n:"Pull-over polea",g:"Pull",m:"Dorsal + serrato",
+   i:"De pie frente a polea alta, brazos extendidos, ligera flexión de codo",
+   f:"Brazos junto al torso, jalando hacia abajo en arco",
+   c:["Brazos casi rectos — no flexiones el codo","El movimiento es como un aletazo hacia atrás","Máximo estiramiento al inicio — siente el dorsal"]},
+  {n:"Remo V-bar",g:"Pull",m:"Dorsal medio + romboides",
+   i:"Sentado frente a polea baja, agarre neutro con V-bar, espalda erguida",
+   f:"Codos atrás, codo al costado del torso, escápulas juntas",
+   c:["Agarre neutro = más carga en dorsal medio","No te inclines hacia atrás","Pausa 1 seg apretando escápulas"]},
+  {n:"Curl concentrado",g:"Pull",m:"Bíceps (pico)",
+   i:"Sentado, codo apoyado en cara interna del muslo, mancuerna colgando",
+   f:"Mancuerna al nivel del hombro, máxima contracción",
+   c:["El apoyo fuerza aislamiento total","Supina la muñeca al subir","Pausa 2 seg en el pico de contracción"]},
+  // LEGS ────────────────────────────────────────────────────
+  {n:"Prensa de pierna",g:"Legs",m:"Cuádriceps + glúteos",
+   i:"Espalda y glúteos pegados al asiento, pies a ancho de hombros en la plataforma",
+   f:"Piernas casi extendidas sin bloquear rodillas",
+   c:["No bloquees las rodillas","Pies más altos = más glúteo; más bajos = más cuádriceps","Controla la bajada 3 seg"]},
+  {n:"Extensión de cuádriceps",g:"Legs",m:"Cuádriceps (aislamiento)",
+   i:"Sentado, el rodillo sobre el empeine, rodillas a 90°",
+   f:"Piernas extendidas, cuádriceps completamente contraídos",
+   c:["Pausa 2 seg con piernas extendidas","Baja muy lento — la excéntrica es la clave","No inclines el torso hacia atrás"]},
+  {n:"Curl femoral tumbado",g:"Legs",m:"Isquiotibiales",
+   i:"Tumbado boca abajo, rodillo sobre el talón, piernas casi extendidas",
+   f:"Talones hacia los glúteos, máxima contracción",
+   c:["Pausa 1–2 seg arriba con apretón","Caderas en extensión activa mejor los isquiotibiales","Controla la bajada"]},
+  {n:"Pantorrilla de pie",g:"Legs",m:"Gastrocnemio",
+   i:"De pie en la máquina, talón colgando, piernas extendidas",
+   f:"Talón arriba en máxima plantiflexión",
+   c:["Pausa 2 seg arriba — aprieta al máximo","Baja lo más que puedas para máximo estiramiento","Piernas rectas activa el gastrocnemio"]},
+  {n:"Abductores (máquina)",g:"Legs",m:"Abductores + glúteo medio",
+   i:"Sentado, piernas juntas contra las almohadillas",
+   f:"Piernas abiertas al máximo rango",
+   c:["Inclínate levemente hacia adelante para más glúteo medio","Controla el cierre","Importante para estabilidad de cadera"]},
+  {n:"Hip thrust",g:"Legs",m:"Glúteos",
+   i:"Espalda apoyada en banca, barra o mancuernas en la cadera, pies planos",
+   f:"Caderas extendidas, cuerpo recto de hombros a rodillas",
+   c:["Aprieta el glúteo al máximo en la extensión","Mentón hacia el pecho para no hiperextender el cuello","Pies a ancho de caderas, rodillas a 90° al final"]},
+  {n:"Peso muerto rumano",g:"Legs",m:"Isquiotibiales + glúteos",
+   i:"De pie, barra o mancuernas al frente del muslo, rodillas ligeramente dobladas",
+   f:"Barra baja hasta media pierna, espalda neutra, caderas hacia atrás",
+   c:["El movimiento es de CADERA hacia atrás — no agacharse","Siente el estiramiento isquiotibial en la bajada","Espalda neutra siempre"]},
+  {n:"Hack squat",g:"Legs",m:"Cuádriceps + glúteos",
+   i:"Hombros bajo los soportes, espalda pegada a la plataforma, pies a ancho de hombros",
+   f:"Piernas casi extendidas, profundidad al menos a 90°",
+   c:["Permite más profundidad con menos carga lumbar","Pies adelantados = más glúteo","Controla la bajada"]},
+  {n:"Aductores (máquina)",g:"Legs",m:"Aductores",
+   i:"Sentado, piernas abiertas contra las almohadillas",
+   f:"Piernas cerradas en el centro",
+   c:["Control total — no uses impulso","Importante para estabilidad pélvica","Equilibra el trabajo con abductores"]},
+  {n:"Pantorrilla sentado",g:"Legs",m:"Sóleo",
+   i:"Sentado, rodillas bajo las almohadillas, talón colgando",
+   f:"Talón arriba en máxima plantiflexión",
+   c:["Rodillas dobladas activa el sóleo (músculo más profundo)","Pausa 2 seg arriba","Combina con pantorrilla de pie para máximo desarrollo"]}
+];
+
+// ══════════════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════════════
+let syncCode = localStorage.getItem('syncCode') || mkCode();
+let db = null, fbOn = false;
+let curType = null, session = {};
+let mVals = { peso: 90.0, grasa: 21.0 };
+let DATA = {
+  perfil: { peso: 90, grasa: 21, masaMagra: 71.1, bloque: 1, semana: 1, inicio: '2026-05-04' },
+  entrenos: [],
+  metricas: []
+};
+
+// ══════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════
+function mkCode() {
+  const c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for (let i=0;i<6;i++) s += c[Math.floor(Math.random()*c.length)];
+  localStorage.setItem('syncCode', s);
+  return s;
+}
+
+function initApp() {
+  const local = localStorage.getItem('fitnessData');
+  if (local) try { DATA = JSON.parse(local); } catch(e){}
+
+  if (FB_CONFIG.apiKey !== 'REEMPLAZAR') {
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(FB_CONFIG);
+      db = firebase.database();
+      fbOn = true;
+      listenFB();
+    } catch(e) { console.warn('Firebase:', e); }
+  }
+
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+
+  renderGuia('Todos');
+  renderDash();
+  mVals.peso = DATA.perfil.peso || 90;
+  mVals.grasa = DATA.perfil.grasa || 21;
+  updMDisplay();
+  document.getElementById('modal-code').textContent = syncCode;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════════════════════════════
+function listenFB() {
+  if (!db) return;
+  db.ref('fitness/' + syncCode).on('value', snap => {
+    const d = snap.val();
+    if (d) { DATA = d; saveLoc(); renderDash(); renderMHist(); }
+  });
+}
+function pushFB() {
+  if (db && fbOn) db.ref('fitness/' + syncCode).set(DATA);
+}
+function saveLoc() { localStorage.setItem('fitnessData', JSON.stringify(DATA)); }
+function save() { saveLoc(); pushFB(); }
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════════════════════
+const TAB_TITLES = {
+  dashboard:'Dashboard', registrar:'Registrar entreno',
+  metricas:'Métricas', suplementos:'Suplementos', guia:'Guía de ejercicios'
+};
+function goTab(tab, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b => b.classList.remove('on'));
+  document.getElementById('p-'+tab).classList.add('on');
+  btn.classList.add('on');
+  document.getElementById('hdr-title').textContent = TAB_TITLES[tab] || tab;
+  window.scrollTo(0,0);
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ══════════════════════════════════════════════════════════════
+// WORKOUT REGISTRATION
+// ══════════════════════════════════════════════════════════════
+function pickType(tipo) {
+  curType = tipo; session = {};
+  document.querySelectorAll('.type-btn').forEach(b =>
+    b.classList.toggle('on', b.textContent.trim() === tipo));
+
+  const exs = GUIA.filter(e => e.g === tipo);
+  const list = document.getElementById('ex-list');
+  list.innerHTML = exs.map(ex => {
+    const id = slugify(ex.n);
+    return `<div class="ex-item" id="ei-${id}">
+      <div class="ex-hdr" onclick="toggleEx('${id}','${esc(ex.n)}')">
+        <div class="ex-box"><span class="ex-tick">✓</span></div>
+        <div><div class="ex-name">${ex.n}</div><div class="ex-muscle">${ex.m}</div></div>
+      </div>
+      <div class="ex-panel">
+        <div class="sp-row">
+          <span class="sp-lbl">Series</span>
+          <div class="stepper">
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','sets',-1)">−</button>
+            <span class="sp-val" id="sets-${id}">3</span>
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','sets',1)">+</button>
+          </div>
+        </div>
+        <div class="sp-row">
+          <span class="sp-lbl">Reps</span>
+          <div class="stepper">
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','reps',-1)">−</button>
+            <span class="sp-val" id="reps-${id}">12</span>
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','reps',1)">+</button>
+          </div>
+        </div>
+        <div class="sp-row">
+          <span class="sp-lbl">Peso (kg)</span>
+          <div class="stepper">
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','kg',-2.5)">−</button>
+            <span class="sp-val" id="kg-${id}">20</span>
+            <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','kg',2.5)">+</button>
+          </div>
+        </div>
+        <textarea class="ex-notes" id="notes-${id}" rows="2" placeholder="Notas, RPE…"></textarea>
+      </div>
+    </div>`;
+  }).join('');
+
+  exs.forEach(ex => { session[ex.n] = {sets:3, reps:12, kg:20, on:false}; });
+  document.getElementById('ex-zone-title').textContent = tipo + ' — toca los ejercicios que hiciste';
+  document.getElementById('ex-zone').style.display = 'block';
+}
+
+function slugify(s) { return s.replace(/[^a-zA-Z0-9]/g,'_'); }
+function esc(s) { return s.replace(/'/g,"\\'"); }
+
+function toggleEx(id, name) {
+  const el = document.getElementById('ei-'+id);
+  const on = !el.classList.contains('on');
+  el.classList.toggle('on', on);
+  if (session[name]) session[name].on = on;
+}
+
+function stp(id, name, field, delta) {
+  if (!session[name]) return;
+  let v = session[name][field] || 0;
+  v = Math.max(0, parseFloat((v + delta).toFixed(1)));
+  session[name][field] = v;
+  document.getElementById(field+'-'+id).textContent = v;
+}
+
+function saveWorkout() {
+  const checked = Object.entries(session).filter(([,d]) => d.on);
+  if (!checked.length) { toast('Selecciona al menos un ejercicio'); return; }
+
+  const entreno = {
+    id: Date.now(),
+    fecha: new Date().toISOString(),
+    tipo: curType,
+    ejercicios: checked.map(([nombre, d]) => ({
+      nombre, sets:d.sets, reps:d.reps, kg:d.kg,
+      notas: document.getElementById('notes-'+slugify(nombre))?.value || ''
+    }))
+  };
+
+  if (!DATA.entrenos) DATA.entrenos = [];
+  DATA.entrenos.unshift(entreno);
+  save();
+
+  curType = null;
+  document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('on'));
+  document.getElementById('ex-zone').style.display = 'none';
+  renderDash();
+  toast('✅ Entreno guardado');
+  goTab('dashboard', document.querySelector('.nb[data-p="dashboard"]'));
+}
+
+// ══════════════════════════════════════════════════════════════
+// METRICS
+// ══════════════════════════════════════════════════════════════
+function stepM(field, delta) {
+  mVals[field] = Math.max(0, parseFloat((mVals[field]+delta).toFixed(1)));
+  updMDisplay();
+}
+function updMDisplay() {
+  document.getElementById('m-peso').textContent = mVals.peso.toFixed(1);
+  document.getElementById('m-grasa').textContent = mVals.grasa.toFixed(1);
+}
+function saveMetric() {
+  const magra = parseFloat((mVals.peso*(1-mVals.grasa/100)).toFixed(1));
+  const m = { id:Date.now(), fecha:new Date().toISOString(),
+    peso:mVals.peso, grasa:mVals.grasa, masaMagra:magra,
+    notas:document.getElementById('m-notas').value };
+  if (!DATA.metricas) DATA.metricas=[];
+  DATA.metricas.unshift(m);
+  DATA.perfil.peso = mVals.peso;
+  DATA.perfil.grasa = mVals.grasa;
+  DATA.perfil.masaMagra = magra;
+  save();
+  renderDash(); renderMHist();
+  document.getElementById('m-notas').value = '';
+  toast('✅ Métricas guardadas');
+}
+function renderMHist() {
+  const c = document.getElementById('m-hist');
+  const ms = DATA.metricas || [];
+  c.innerHTML = !ms.length
+    ? '<div class="empty"><div class="empty-ico">📊</div><p>Sin métricas aún</p></div>'
+    : ms.slice(0,12).map(m=>`<div class="h-item">
+        <div class="h-date">${fDate(m.fecha)}</div>
+        <div class="h-title">${m.peso} kg · ${m.grasa}% grasa · ${m.masaMagra} kg magra</div>
+        ${m.notas?`<div class="h-detail">${m.notas}</div>`:''}
+      </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function renderDash() {
+  const p = DATA.perfil || {};
+  document.getElementById('d-peso').textContent = p.peso ?? '--';
+  document.getElementById('d-grasa').textContent = p.grasa ?? '--';
+  document.getElementById('d-magra').textContent = p.masaMagra ?? '--';
+  document.getElementById('d-semana').textContent = 'S' + (p.semana||1);
+
+  const ec = document.getElementById('d-entrenos');
+  const es = DATA.entrenos || [];
+  ec.innerHTML = !es.length
+    ? '<div class="empty"><div class="empty-ico">💪</div><p>¡Registra tu primer entreno!</p></div>'
+    : es.slice(0,3).map(e=>`<div class="h-item">
+        <div class="h-date">${fDate(e.fecha)}</div>
+        <div class="h-title">${e.tipo} — ${e.ejercicios.length} ejercicios</div>
+        <div class="h-detail">${e.ejercicios.map(x=>x.nombre).join(' · ')}</div>
+      </div>`).join('');
+
+  const mc = document.getElementById('d-metricas');
+  const ms = DATA.metricas || [];
+  mc.innerHTML = !ms.length
+    ? '<div class="empty"><div class="empty-ico">📊</div><p>Sin métricas registradas</p></div>'
+    : ms.slice(0,2).map(m=>`<div class="h-item">
+        <div class="h-date">${fDate(m.fecha)}</div>
+        <div class="h-title">${m.peso} kg · ${m.grasa}% grasa · ${m.masaMagra} kg magra</div>
+      </div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════════
+// GUIDE
+// ══════════════════════════════════════════════════════════════
+function renderGuia(filter) {
+  const exs = filter === 'Todos' ? GUIA : GUIA.filter(e => e.g === filter);
+  document.getElementById('guia-list').innerHTML = exs.map((ex,i)=>`
+    <div class="guide-card" id="gc-${i}">
+      <div class="guide-hdr" onclick="toggleG(${i})">
+        <div>
+          <div class="guide-name">${ex.n}</div>
+          <div class="guide-sub">${ex.m}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px">
+          <span class="guide-tag">${ex.g}</span>
+          <span class="guide-arr">▾</span>
+        </div>
+      </div>
+      <div class="guide-body">
+        <div class="pos-grid">
+          <div class="pos-box"><div class="pos-lbl">Posición inicial</div><div class="pos-txt">${ex.i}</div></div>
+          <div class="pos-box"><div class="pos-lbl">Posición final</div><div class="pos-txt">${ex.f}</div></div>
+        </div>
+        <ul class="cues">${ex.c.map(c=>`<li>${c}</li>`).join('')}</ul>
+      </div>
+    </div>`).join('');
+}
+function filterG(f, btn) {
+  document.querySelectorAll('.fb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  renderGuia(f);
+}
+function toggleG(i) { document.getElementById('gc-'+i).classList.toggle('open'); }
+
+// ══════════════════════════════════════════════════════════════
+// SYNC MODAL
+// ══════════════════════════════════════════════════════════════
+function openModal() {
+  document.getElementById('modal-code').textContent = syncCode;
+  document.getElementById('modal').classList.add('on');
+  // Show note if Firebase not configured
+  const note = document.getElementById('fb-note');
+  if (note) note.style.display = fbOn ? 'none' : 'block';
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('on');
+  document.getElementById('modal-input').value = '';
+}
+function copyCode() {
+  if (navigator.clipboard) navigator.clipboard.writeText(syncCode)
+    .then(()=>toast('✅ Código copiado')).catch(()=>toast('Código: '+syncCode));
+  else toast('Código: '+syncCode);
+}
+function linkCode() {
+  const v = document.getElementById('modal-input').value.trim().toUpperCase();
+  if (v.length !== 6) { toast('El código debe tener 6 caracteres'); return; }
+  if (v === syncCode) { toast('Es el mismo código'); return; }
+  syncCode = v;
+  localStorage.setItem('syncCode', syncCode);
+  if (db) { db.ref('fitness/'+syncCode).off(); listenFB(); }
+  closeModal();
+  toast('🔗 Vinculado a ' + syncCode);
+}
+
+// ══════════════════════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════════════════════
+function fDate(iso) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('es-MX',{weekday:'short',day:'numeric',month:'short'})
+    + ' ' + d.toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit'});
+}
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('on');
+  setTimeout(()=>t.classList.remove('on'), 2600);
+}
+
+// Click outside modal
+document.getElementById('modal').addEventListener('click', function(e){
+  if (e.target === this) closeModal();
+});
+
+// ── START ─────────────────────────────────────────────────────
+initApp();
+</script>
+</body>
+</html>
