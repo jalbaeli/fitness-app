@@ -219,6 +219,14 @@ textarea,input{font-family:inherit}
 .danger-title{color:var(--danger)!important}
 .sync-note{font-size:.75rem;color:var(--txt2);padding:8px 12px;background:var(--surf2);
   border-radius:10px;margin-bottom:12px;text-align:center;line-height:1.4}
+.ex-meta{font-size:.7rem;color:var(--acc);font-weight:800;white-space:nowrap;
+  padding:3px 8px;background:rgba(124,107,255,.15);border-radius:8px}
+.ex-zone-desc{font-size:.78rem;color:var(--txt2);margin-bottom:10px;padding:0 2px}
+.finisher-card{background:rgba(0,214,143,.07);border:1px solid rgba(0,214,143,.35);
+  border-radius:14px;padding:14px 15px;margin-top:10px;display:flex;align-items:center;gap:12px}
+.fin-ico{font-size:1.8rem;line-height:1}
+.fin-txt{font-size:.86rem;line-height:1.5}
+.fin-title{font-weight:800;color:var(--ok);margin-bottom:2px}
 </style>
 </head>
 <body>
@@ -256,13 +264,18 @@ textarea,input{font-family:inherit}
 <div class="page" id="p-registrar">
   <div class="sec-title">¿Qué entrenaste hoy?</div>
   <div class="type-grid">
-    <button class="type-btn" onclick="pickType('Push')"><span class="ico">🤜</span>Push</button>
-    <button class="type-btn" onclick="pickType('Pull')"><span class="ico">🤛</span>Pull</button>
-    <button class="type-btn" onclick="pickType('Legs')"><span class="ico">🦵</span>Legs</button>
+    <button class="type-btn" onclick="pickType('Push 1')"><span class="ico">🤜</span>Push 1</button>
+    <button class="type-btn" onclick="pickType('Push 2')"><span class="ico">💪</span>Push 2</button>
+    <button class="type-btn" onclick="pickType('Pull 1')"><span class="ico">🤛</span>Pull 1</button>
+    <button class="type-btn" onclick="pickType('Pull 2')"><span class="ico">🔄</span>Pull 2</button>
+    <button class="type-btn" onclick="pickType('Legs 1')"><span class="ico">🦵</span>Legs 1</button>
+    <button class="type-btn" onclick="pickType('Legs 2')"><span class="ico">🍑</span>Legs 2</button>
   </div>
   <div id="ex-zone" style="display:none">
     <div class="sec-title" id="ex-zone-title">Ejercicios</div>
+    <div class="ex-zone-desc" id="ex-zone-desc"></div>
     <div id="ex-list"></div>
+    <div id="ex-finisher"></div>
     <div class="gap12"></div>
     <button class="btn btn-ok" onclick="saveWorkout()">💾 Guardar entreno</button>
     <div style="height:20px"></div>
@@ -559,6 +572,75 @@ const GUIA = [
 ];
 
 // ══════════════════════════════════════════════════════════════
+// RUTINAS — BLOQUE 2
+// ══════════════════════════════════════════════════════════════
+const RUTINAS = {
+  'Push 1':{
+    desc:'Pecho dominante · Hombro lateral · Tríceps',fin:false,
+    ex:[
+      {n:'Press inclinado mancuernas',meta:'4×5-8',sets:4,reps:6,kg:25},
+      {n:'Press en máquina',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Aperturas pec deck',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Elevaciones laterales',meta:'4×10-12',sets:4,reps:11,kg:10},
+      {n:'Elevaciones laterales cable',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Extensiones tríceps polea',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Tríceps sobre cabeza',meta:'3×10-12',sets:3,reps:11,kg:0}
+    ]},
+  'Push 2':{
+    desc:'Hombro dominante · Pecho secundario · Tríceps',fin:false,
+    ex:[
+      {n:'Press militar',meta:'4×5-8',sets:4,reps:6,kg:20},
+      {n:'Press Arnold',meta:'3×8-10',sets:3,reps:9,kg:15},
+      {n:'Elevaciones laterales',meta:'4×10-12',sets:4,reps:11,kg:10},
+      {n:'Elevaciones laterales cable',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Press en máquina',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Fondos en máquina',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Extensiones tríceps polea',meta:'3×10-12',sets:3,reps:11,kg:0}
+    ]},
+  'Pull 1':{
+    desc:'Espalda vertical · Bíceps · Deltoides posterior',fin:false,
+    ex:[
+      {n:'Jalón al pecho',meta:'4×5-8',sets:4,reps:6,kg:0},
+      {n:'Remo en máquina',meta:'4×8-10',sets:4,reps:9,kg:0},
+      {n:'Remo unilateral mancuerna',meta:'3×8-10',sets:3,reps:9,kg:20},
+      {n:'Pull-over polea',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Face pulls',meta:'4×12-15',sets:4,reps:13,kg:0},
+      {n:'Curl bíceps barra',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Curl martillo',meta:'3×10-12',sets:3,reps:11,kg:0}
+    ]},
+  'Pull 2':{
+    desc:'Espalda horizontal · Brazos · Deltoides posterior',fin:false,
+    ex:[
+      {n:'Remo V-bar',meta:'4×5-8',sets:4,reps:6,kg:0},
+      {n:'Jalón al pecho',meta:'4×8-10',sets:4,reps:9,kg:0},
+      {n:'Remo en máquina',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Pull-over polea',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Face pulls',meta:'3×12-15',sets:3,reps:13,kg:0},
+      {n:'Curl predicador',meta:'3×8-10',sets:3,reps:9,kg:0},
+      {n:'Curl concentrado',meta:'3×10-12',sets:3,reps:11,kg:0}
+    ]},
+  'Legs 1':{
+    desc:'Cuádriceps dominante · Core · Pantorrillas',fin:true,
+    ex:[
+      {n:'Hack squat',meta:'4×5-8',sets:4,reps:6,kg:0},
+      {n:'Prensa de pierna',meta:'4×8-10',sets:4,reps:9,kg:0},
+      {n:'Extensión de cuádriceps',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Curl femoral tumbado',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Pantorrilla de pie',meta:'3×12-15',sets:3,reps:13,kg:0}
+    ]},
+  'Legs 2':{
+    desc:'Glúteo · Cadena posterior · Core',fin:true,
+    ex:[
+      {n:'Hip thrust',meta:'4×5-8',sets:4,reps:6,kg:0},
+      {n:'Peso muerto rumano',meta:'4×8-10',sets:4,reps:9,kg:20},
+      {n:'Curl femoral tumbado',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Abductores (máquina)',meta:'3×12-15',sets:3,reps:13,kg:0},
+      {n:'Aductores (máquina)',meta:'3×10-12',sets:3,reps:11,kg:0},
+      {n:'Pantorrilla sentado',meta:'3×12-15',sets:3,reps:13,kg:0}
+    ]}
+};
+
+// ══════════════════════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════════════════════
 let syncCode = localStorage.getItem('syncCode') || mkCode();
@@ -646,21 +728,30 @@ function pickType(tipo) {
   document.querySelectorAll('.type-btn').forEach(b =>
     b.classList.toggle('on', b.textContent.trim() === tipo));
 
-  const exs = GUIA.filter(e => e.g === tipo);
+  // Use programmed routine if available, else fall back to GUIA
+  const rutina = RUTINAS[tipo];
+  const exs = rutina
+    ? rutina.ex.map(re => {
+        const g = GUIA.find(x => x.n === re.n) || {n:re.n, m:'', g:tipo};
+        return {...g, ...re};
+      })
+    : GUIA.filter(e => e.g === tipo.split(' ')[0]);
+
   const list = document.getElementById('ex-list');
   list.innerHTML = exs.map(ex => {
     const id = slugify(ex.n);
     return `<div class="ex-item" id="ei-${id}">
       <div class="ex-hdr" onclick="toggleEx('${id}','${esc(ex.n)}')">
         <div class="ex-box"><span class="ex-tick">✓</span></div>
-        <div><div class="ex-name">${ex.n}</div><div class="ex-muscle">${ex.m}</div></div>
+        <div style="flex:1"><div class="ex-name">${ex.n}</div><div class="ex-muscle">${ex.m||''}</div></div>
+        ${ex.meta?`<span class="ex-meta">${ex.meta}</span>`:''}
       </div>
       <div class="ex-panel">
         <div class="sp-row">
           <span class="sp-lbl">Series</span>
           <div class="stepper">
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','sets',-1)">−</button>
-            <span class="sp-val" id="sets-${id}">3</span>
+            <span class="sp-val" id="sets-${id}">${ex.sets||3}</span>
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','sets',1)">+</button>
           </div>
         </div>
@@ -668,7 +759,7 @@ function pickType(tipo) {
           <span class="sp-lbl">Reps</span>
           <div class="stepper">
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','reps',-1)">−</button>
-            <span class="sp-val" id="reps-${id}">12</span>
+            <span class="sp-val" id="reps-${id}">${ex.reps||12}</span>
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','reps',1)">+</button>
           </div>
         </div>
@@ -676,7 +767,7 @@ function pickType(tipo) {
           <span class="sp-lbl">Peso (kg)</span>
           <div class="stepper">
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','kg',-2.5)">−</button>
-            <span class="sp-val" id="kg-${id}">20</span>
+            <span class="sp-val" id="kg-${id}">${ex.kg||20}</span>
             <button class="sp-btn" onclick="stp('${id}','${esc(ex.n)}','kg',2.5)">+</button>
           </div>
         </div>
@@ -685,8 +776,21 @@ function pickType(tipo) {
     </div>`;
   }).join('');
 
-  exs.forEach(ex => { session[ex.n] = {sets:3, reps:12, kg:20, on:false}; });
-  document.getElementById('ex-zone-title').textContent = tipo + ' — toca los ejercicios que hiciste';
+  // Finisher card for Legs days
+  document.getElementById('ex-finisher').innerHTML = rutina && rutina.fin
+    ? `<div class="finisher-card">
+        <div class="fin-ico">🚴</div>
+        <div class="fin-txt">
+          <div class="fin-title">Finisher — no saltarlo</div>
+          10 min en bici estática · FC 130–150 ppm · esfuerzo moderado constante
+        </div>
+      </div>` : '';
+
+  // Description
+  document.getElementById('ex-zone-desc').textContent = rutina ? rutina.desc : '';
+
+  exs.forEach(ex => { session[ex.n] = {sets:ex.sets||3, reps:ex.reps||12, kg:ex.kg||20, on:false}; });
+  document.getElementById('ex-zone-title').textContent = tipo;
   document.getElementById('ex-zone').style.display = 'block';
 }
 
