@@ -1,4 +1,4 @@
-const CACHE = 'fitness-v2';
+const CACHE = 'fitness-v3';
 const ASSETS = ['./index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {
@@ -17,6 +17,7 @@ self.addEventListener('activate', e => {
 
 self.addEventListener('fetch', e => {
   const url = e.request.url;
+  // Don't cache Firebase or CDN requests
   if (url.includes('firebaseio.com') || url.includes('googleapis.com') ||
       url.includes('gstatic.com') || url.includes('firebasestorage')) return;
 
